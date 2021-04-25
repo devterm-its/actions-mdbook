@@ -1,9 +1,10 @@
 import * as core from '@actions/core';
-import * as tc from '@actions/tool-cache';
 import * as io from '@actions/io';
-import {getOS} from './get-os';
-import {getURL} from './get-url';
+import * as tc from '@actions/tool-cache';
 import * as path from 'path';
+import {v4 as uuid} from 'uuid';
+import {getOS} from './get-os';
+import {getLinkcheckURL, getURL} from './get-url';
 
 export function getBaseLocation(): string {
   let baseLocation: string = '';
@@ -20,23 +21,30 @@ export function getBaseLocation(): string {
 }
 
 export async function createTempDir(baseLocation: string): Promise<string> {
-  let tempDir: string = process.env['RUNNER_TEMPDIRECTORY'] || '';
+  let tempDir: string = process.env['RUNNER_TEMP'] || '';
 
   if (tempDir === '') {
     tempDir = path.join(baseLocation, 'tmp');
+    process.env['RUNNER_TEMP'] = tempDir;
   }
 
+  tempDir = path.join(tempDir, uuid());
   await io.mkdirP(tempDir);
   core.debug(`tempDir: ${tempDir}`);
 
   return tempDir;
 }
 
-export async function installer(version: string) {
+export async function installer(version: string, tool?: string) {
   const osName: string = getOS(process.platform);
   core.info(`Operating System: ${osName}`);
 
-  const toolURL: string = getURL(osName, version);
+  let toolURL: string;
+  if (tool === 'linkcheck') {
+    toolURL = getLinkcheckURL(osName, version);
+  } else {
+    toolURL = getURL(osName, version);
+  }
   core.info(`toolURL: ${toolURL}`);
 
   const baseLocation: string = getBaseLocation();
@@ -48,18 +56,20 @@ export async function installer(version: string) {
   const tempDir: string = await createTempDir(baseLocation);
   const toolAssets: string = await tc.downloadTool(toolURL);
   let toolBin: string = '';
-  if (process.platform === 'win32') {
-    const toolExtractedFolder: string = await tc.extractZip(
-      toolAssets,
-      tempDir
-    );
-    toolBin = `${toolExtractedFolder}/mdbook.exe`;
+  let toolExtractedFolder: string;
+  if (tool === 'linkcheck') {
+    toolExtractedFolder = await tc.extractZip(toolAssets, tempDir);
+    toolBin = `${toolExtractedFolder}/mdbook-linkcheck${
+      process.platform === 'win32' ? '.exe' : ''
+    }`;
   } else {
-    const toolExtractedFolder: string = await tc.extractTar(
-      toolAssets,
-      tempDir
-    );
-    toolBin = `${toolExtractedFolder}/mdbook`;
+    if (process.platform === 'win32') {
+      toolExtractedFolder = await tc.extractZip(toolAssets, tempDir);
+      toolBin = `${toolExtractedFolder}/mdbook.exe`;
+    } else {
+      toolExtractedFolder = await tc.extractTar(toolAssets, tempDir);
+      toolBin = `${toolExtractedFolder}/mdbook`;
+    }
   }
   await io.mv(toolBin, toolPath);
 }

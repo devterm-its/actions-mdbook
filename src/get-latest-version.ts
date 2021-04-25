@@ -25,7 +25,7 @@ export async function getLatestVersion(
     if (api === 'brew') {
       latestVersion = json.versions.stable;
     } else if (api === 'github') {
-      latestVersion = json.tag_name;
+      latestVersion = json.tag_name.replace('v', '');
     }
     return latestVersion;
   } catch (e) {

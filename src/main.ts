@@ -41,7 +41,12 @@ export async function showVersion(
 export async function run(): Promise<any> {
   try {
     let toolVersion: string = core.getInput('mdbook-version');
+    let shouldInstallLinkcheck: boolean = Boolean(
+      core.getInput('use-linkcheck')
+    );
+    let toolVersionLinkcheck: string = core.getInput('linkcheck-version');
     let installVersion: string = '';
+    let installVersionLinkcheck: string = '';
 
     let result: actionResult = {
       exitcode: 0,
@@ -54,9 +59,31 @@ export async function run(): Promise<any> {
       installVersion = toolVersion;
     }
 
+    if (shouldInstallLinkcheck) {
+      if (toolVersionLinkcheck === '' || toolVersionLinkcheck === 'latest') {
+        installVersionLinkcheck = await getLatestVersion(
+          'Michael-F-Bryan',
+          'mdbook-linkcheck',
+          'github'
+        );
+      } else {
+        installVersionLinkcheck = toolVersionLinkcheck;
+      }
+    }
+
     core.info(`mdbook version: ${installVersion}`);
     await installer(installVersion);
+
+    if (shouldInstallLinkcheck) {
+      core.info(`mdbook-linkcheck version: ${installVersionLinkcheck}`);
+      await installer(installVersionLinkcheck, 'linkcheck');
+    }
+
     result = await showVersion('mdbook', ['--version']);
+
+    if (shouldInstallLinkcheck) {
+      result = await showVersion('mdbook-linkcheck', ['--version']);
+    }
 
     return result;
   } catch (e) {

@@ -1,7 +1,8 @@
-import * as main from '../src/main';
-const nock = require('nock');
 import {FetchError} from 'node-fetch';
+import * as main from '../src/main';
 import jsonTestBrew from './data/brew.json';
+import jsonTestGithubLinkcheck from './data/github-linkcheck.json';
+const nock = require('nock');
 // import jsonTestGithub from './data/github.json';
 
 jest.setTimeout(30000);
@@ -32,6 +33,21 @@ describe('Integration testing run()', () => {
       .reply(200, jsonTestBrew);
     const result: main.actionResult = await main.run();
     expect(result.output).toMatch('mdbook v0.3.5');
+  });
+
+  test('succed in installing latest version with linkcheck', async () => {
+    const testVersion: string = 'latest';
+    process.env['INPUT_MDBOOK-VERSION'] = process.env[
+      'INPUT_USE-LINKCHECK'
+    ] = testVersion;
+    nock('https://formulae.brew.sh')
+      .get(`/api/formula/${repo}.json`)
+      .reply(200, jsonTestBrew);
+    nock('https://api.github.com')
+      .get('/repos/Michael-F-Bryan/mdbook-linkcheck/releases/latest')
+      .reply(200, jsonTestGithubLinkcheck);
+    const result: main.actionResult = await main.run();
+    expect(result.output).toMatch('mdbook-linkcheck 0.7.4');
   });
 
   if (process.platform === 'linux') {

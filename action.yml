@@ -6,6 +6,14 @@ inputs:
     description: 'The mdBook version to download (if necessary) and use. Example: 0.3.5'
     required: false
     default: 'latest'
+  use-linkcheck:
+    description: 'Set to true if you want to install mdbook-linkcheck as well'
+    required: false
+    default: 'false'
+  linkcheck-version:
+    description: 'The mdbook-linkcheck version to download (if necessary) and use. Example: 0.7.0'
+    required: false
+    default: 'latest'
 runs:
   using: 'node12'
   main: 'lib/index.js'

@@ -43,12 +43,14 @@
     "@actions/exec": "^1.0.4",
     "@actions/io": "^1.0.2",
     "@actions/tool-cache": "^1.6.1",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^2.6.1",
+    "uuid": "^3.3.3"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
     "@types/node": "~12",
     "@types/node-fetch": "^2.5.8",
+    "@types/uuid": "^8.3.0",
     "@typescript-eslint/parser": "^4.15.0",
     "@vercel/ncc": "^0.27.0",
     "eslint": "^7.19.0",
